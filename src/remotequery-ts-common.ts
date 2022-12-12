@@ -60,9 +60,6 @@ export interface ResultX extends Result {
 }
 
 export type EmtpyResult = Record<string, Simple>;
-
-export type CondResult = Result | EmtpyResult;
-
 export type StartBlockType = 'if' | 'if-else' | 'switch' | 'while' | 'foreach' | string;
 export type EndBlockType = 'fi' | 'done' | 'end' | string;
 export type RegistryType = 'node' | 'sql' | string;
@@ -70,43 +67,23 @@ export type RegistryType = 'node' | 'sql' | string;
 export type CommandsType = {
   StartBlock: Record<StartBlockType, true>;
   EndBlock: Record<EndBlockType, true>;
-  Registry: Record<RegistryType, RegistryArgFun>;
-  Node: Record<string, RegistryArgFun>;
+  Registry: Record<RegistryType, RegistryObjFun>;
+  Node: Record<string, RegistryObjFun>;
 };
 
-export type RegistryArgFun = (
-  request: Request,
-  currentResult: Result,
-  statementNodeIn: StatementNode,
-  serviceEntry: ServiceEntry,
-  context: Context
-) => Promise<Result | undefined>;
+export interface RegistryObj {
+  request: Request;
+  currentResult: Result;
+  statementNode: StatementNode;
+  serviceEntry: ServiceEntry;
+  context: Context;
+}
 
-// export type RegistryObjFun = ({
-//   request,
-//   currentResult,
-//   statementNode,
-//   serviceEntry,
-//   context
-// }: {
-//   request: Request;
-//   currentResult: Result;
-//   statementNode: StatementNode;
-//   serviceEntry?: ServiceEntry;
-//   context: Context;
-// }) => Promise<Result | undefined>;
+export type RegistryObjFun = (registerObj: RegistryObj) => Promise<Result | undefined>;
 
 export type LoggerLevel = 'debug' | 'info' | 'warn' | 'error';
 export type LoggerFun = (msg: string) => void;
 export type Logger = Record<LoggerLevel, LoggerFun>;
-
-export type ConfigType = {
-  getServiceEntrySql: string;
-  saveServiceEntry: string;
-  statementsPreprocessor: (statements: string) => string;
-  logger: Logger;
-  ignoredErrors: string[];
-};
 
 export const isError = (error: any): error is Error => {
   return typeof error.message === 'string' && typeof error.name === 'string';

@@ -1,1 +1,1 @@
-export * from './remotequery-common';
+export * from './remotequery-ts-common';
