@@ -1,4 +1,4 @@
-/* tslint:disable:no-string-literal */
+
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
 export type Simple = string | number | boolean;
@@ -21,12 +21,18 @@ export type Context = {
   includes: Record<string, number>;
   maxRows?: number;
   serviceEntry?: ServiceEntry;
+  txId?:string;
 };
+
+interface ServiceFunctionArgs {
+  request: Request;
+  context: Context
+}
 
 export type ServiceEntry = {
   serviceId: string;
   statements: string;
-  serviceFunction?: (request: Request, context: Context) => Result;
+  serviceFunction?: (serviceFunctionArgs: ServiceFunctionArgs) => Promise<Result>;
   roles: string[];
   tags: Set<string>;
 };
@@ -101,11 +107,11 @@ export interface Driver {
 
 export function exceptionResult(e: string | Error | unknown): ExceptionResult {
   if (isError(e)) {
-    return { exception: e.message, stack: e.stack };
+    return {exception: e.message, stack: e.stack};
   } else if (typeof e === 'string') {
-    return { exception: e };
+    return {exception: e};
   }
-  return { exception: 'Unknown' };
+  return {exception: 'Unknown'};
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -118,7 +124,7 @@ export function toFirst(serviceData: Result): Record<string, string> | undefined
 }
 
 export function toList<R extends Record<string, string | undefined> = Record<string, string>>(
-  serviceData: Result
+    serviceData: Result
 ): R[] {
   if (Array.isArray(serviceData)) {
     return serviceData;
