@@ -21,7 +21,7 @@ export type Context = {
   includes: Record<string, number>;
   maxRows?: number;
   serviceEntry?: ServiceEntry;
-  txId?:string;
+  txId?: string;
 };
 
 interface ServiceFunctionArgs {
@@ -99,11 +99,22 @@ export type ProcessSql = (sql: string, parameters?: SRecord, context?: Partial<C
 export type ProcessSqlDirect = (sql: string, values: Simple[], maxRows: number) => Promise<Result>;
 export type GetServiceEntry = (serviceId: string) => Promise<ServiceEntry | ExceptionResult>;
 
-export interface Driver {
+export interface Driver<ConnectionType = any> {
   processSql: ProcessSql;
   processSqlDirect: ProcessSqlDirect;
   getServiceEntry: GetServiceEntry;
+
+  returnConnection: (con: ConnectionType) => void;
+  getConnection: () => Promise<ConnectionType | undefined>;
+
+  startTransaction: () => Promise<string>;
+  commitTransaction: (txId: string) => Promise<void>;
+  rollbackTransaction: (txId: string) => Promise<void>;
+
+
+  destroy: () => void;
 }
+
 
 export function exceptionResult(e: string | Error | unknown): ExceptionResult {
   if (isError(e)) {
