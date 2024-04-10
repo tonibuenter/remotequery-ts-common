@@ -1,4 +1,4 @@
-
+/* tslint:disable:no-string-literal */
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
 export type Simple = string | number | boolean;
