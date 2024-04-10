@@ -111,7 +111,6 @@ export interface Driver<ConnectionType = any> {
   commitTransaction: (txId: string) => Promise<void>;
   rollbackTransaction: (txId: string) => Promise<void>;
 
-
   destroy: () => void;
 }
 
@@ -130,8 +129,10 @@ export const isExceptionResult = (data: any): data is ExceptionResult => {
   return data && typeof data.exception === 'string';
 };
 
-export function toFirst(serviceData: Result): Record<string, string> | undefined {
-  return toList(serviceData)[0];
+export function toFirst<R extends Record<string, string | undefined> = Record<string, string>>(
+    serviceData: Result
+): R {
+  return toList<R>(serviceData)[0];
 }
 
 export function toList<R extends Record<string, string | undefined> = Record<string, string>>(
