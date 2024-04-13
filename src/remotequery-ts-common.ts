@@ -1,14 +1,13 @@
 /* tslint:disable:no-string-literal */
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
-export type Simple = string | number | boolean;
-export type SRecord = Record<string, Simple>;
+export type SRecord = Record<string, string>;
 
 export type Request = {
   userId?: string;
   roles?: string[];
   serviceId: string;
-  parameters: Record<string, Simple>;
+  parameters: SRecord;
 };
 
 export type Context = {
@@ -65,7 +64,7 @@ export interface ResultX extends Result {
   single: () => string | undefined;
 }
 
-export type EmtpyResult = Record<string, Simple>;
+export type EmtpyResult = Record<string, string>;
 export type StartBlockType = 'if' | 'if-else' | 'switch' | 'while' | 'foreach' | string;
 export type EndBlockType = 'fi' | 'done' | 'end' | string;
 export type RegistryType = 'node' | 'sql' | string;
@@ -96,7 +95,7 @@ export const isError = (error: any): error is Error => {
 };
 
 export type ProcessSql = (sql: string, parameters?: SRecord, context?: Partial<Context>) => Promise<Result>;
-export type ProcessSqlDirect = (sql: string, values: Simple[], maxRows: number) => Promise<Result>;
+export type ProcessSqlDirect = (sql: string, values: string[], maxRows: number) => Promise<Result>;
 export type GetServiceEntry = (serviceId: string) => Promise<ServiceEntry | ExceptionResult>;
 
 export interface Driver<ConnectionType = any> {
