@@ -72,7 +72,7 @@ export interface RegistryObj {
 export type LoggerLevel = 'debug' | 'info' | 'warn' | 'error';
 export type LoggerFun = (msg: string) => void;
 export type Logger = Record<LoggerLevel, LoggerFun>;
-export type ProcessSql = (sql: string, parameters?: SRecord, context?: Partial<Context>) => Promise<Result>;
+export type ProcessSql = (sql: string, parameters?: PRecord, context?: Partial<Context>) => Promise<Result>;
 export type ProcessSqlDirect = (sql: string, values: string[], maxRows: number) => Promise<Result>;
 export type GetServiceEntry = (serviceId: string) => Promise<ServiceEntry | ExceptionResult>;
 

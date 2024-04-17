@@ -1,7 +1,7 @@
 /* tslint:disable:no-string-literal */
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
-import {ExceptionResult, Logger, Result, RqResultOrList, SRecord} from "./types";
+import {ExceptionResult, Logger, PRecord, Result, RqResultOrList, SRecord} from "./types";
 
 export const isError = (error: any): error is Error => {
   return typeof error.message === 'string' && typeof error.name === 'string';
@@ -80,7 +80,6 @@ export function toList<R extends SRecord>(data: RqResultOrList): R[] {
   }
 
   const header = data.header;
-
   const list: Record<string, string>[] = [];
   data.table.forEach((row: string[]) => {
     const nrow: Record<string, string> = {};
@@ -136,3 +135,11 @@ export function toFirst<R = SRecord>(data: RqResultOrList): R | undefined {
   }
   return undefined;
 }
+
+
+export const toSRecord = (r: PRecord) =>
+  Object.entries(r).reduce<SRecord>((a, [k, v]) => {
+    a[k] = v.toString();
+    return a;
+  }, {});
+
