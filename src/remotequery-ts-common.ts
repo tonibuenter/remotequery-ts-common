@@ -1,117 +1,11 @@
 /* tslint:disable:no-string-literal */
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
-export type SRecord = Record<string, string>;
-
-export type Request = {
-  userId?: string;
-  roles?: string[];
-  serviceId: string;
-  parameters: SRecord;
-};
-
-export type Context = {
-  recursion: number;
-  contextId: number;
-  rowsAffectedList: number[];
-  userMessages: string[];
-  systemMessages: string[];
-  statusCode: number;
-  includes: Record<string, number>;
-  maxRows?: number;
-  serviceEntry?: ServiceEntry;
-  txId?: string;
-};
-
-interface ServiceFunctionArgs {
-  request: Request;
-  context: Context
-}
-
-export type ServiceEntry = {
-  serviceId: string;
-  statements: string;
-  serviceFunction?: (serviceFunctionArgs: ServiceFunctionArgs) => Promise<Result>;
-  roles: string[];
-  tags: Set<string>;
-};
-
-export type StatementNode = {
-  cmd: string;
-  statement: string;
-  parameter: string;
-  children?: StatementNode[];
-};
-
-export interface ExceptionResult {
-  exception: string;
-  stack?: string;
-}
-
-export interface Result extends Partial<ExceptionResult> {
-  types?: string[];
-  headerSql?: string[];
-  header?: string[];
-  table?: string[][];
-  rowsAffected?: number;
-  from?: number;
-  hasMore?: boolean;
-}
-
-export interface ResultX extends Result {
-  first: () => Record<string, string> | undefined;
-  list: () => Record<string, string>[];
-  single: () => string | undefined;
-}
-
-export type EmtpyResult = Record<string, string>;
-export type StartBlockType = 'if' | 'if-else' | 'switch' | 'while' | 'foreach' | string;
-export type EndBlockType = 'fi' | 'done' | 'end' | string;
-export type RegistryType = 'node' | 'sql' | string;
-
-export type CommandsType = {
-  StartBlock: Record<StartBlockType, true>;
-  EndBlock: Record<EndBlockType, true>;
-  Registry: Record<RegistryType, RegistryObjFun>;
-  Node: Record<string, RegistryObjFun>;
-};
-
-export interface RegistryObj {
-  request: Request;
-  currentResult: Result;
-  statementNode: StatementNode;
-  serviceEntry: ServiceEntry;
-  context: Context;
-}
-
-export type RegistryObjFun = (registerObj: RegistryObj) => Promise<Result | undefined>;
-
-export type LoggerLevel = 'debug' | 'info' | 'warn' | 'error';
-export type LoggerFun = (msg: string) => void;
-export type Logger = Record<LoggerLevel, LoggerFun>;
+import {ExceptionResult, Logger, Result, RqResultOrList, SRecord} from "./types";
 
 export const isError = (error: any): error is Error => {
   return typeof error.message === 'string' && typeof error.name === 'string';
 };
-
-export type ProcessSql = (sql: string, parameters?: SRecord, context?: Partial<Context>) => Promise<Result>;
-export type ProcessSqlDirect = (sql: string, values: string[], maxRows: number) => Promise<Result>;
-export type GetServiceEntry = (serviceId: string) => Promise<ServiceEntry | ExceptionResult>;
-
-export interface Driver<ConnectionType = any> {
-  processSql: ProcessSql;
-  processSqlDirect: ProcessSqlDirect;
-  getServiceEntry: GetServiceEntry;
-
-  returnConnection: (con: ConnectionType) => void;
-  getConnection: () => Promise<ConnectionType | undefined>;
-
-  startTransaction: () => Promise<string>;
-  commitTransaction: (txId: string) => Promise<void>;
-  rollbackTransaction: (txId: string) => Promise<void>;
-
-  destroy: () => void;
-}
 
 
 export function exceptionResult(e: string | Error | unknown): ExceptionResult {
@@ -128,34 +22,6 @@ export const isExceptionResult = (data: any): data is ExceptionResult => {
   return data && typeof data.exception === 'string';
 };
 
-export function toFirst<R extends Record<string, string | undefined> = Record<string, string>>(
-    serviceData: Result
-): R {
-  return toList<R>(serviceData)[0];
-}
-
-export function toList<R extends Record<string, string | undefined> = Record<string, string>>(
-    serviceData: Result
-): R[] {
-  if (Array.isArray(serviceData)) {
-    return serviceData;
-  }
-  const list: R[] = [];
-  if (serviceData.table && serviceData.header) {
-    const header = serviceData.header;
-    const table = serviceData.table;
-
-    table.forEach((row) => {
-      const obj: any = {};
-      list.push(obj);
-      for (let j = 0; j < header.length; j++) {
-        const head = header[j];
-        obj[head] = row[j];
-      }
-    });
-  }
-  return list;
-}
 
 export function trim(str: string): string {
   if (!str) {
@@ -167,6 +33,7 @@ export function trim(str: string): string {
 export function noop() {
   // noop
 }
+
 
 export const consoleLogger: Logger = {
   // tslint:disable-next-line:no-console
@@ -189,3 +56,83 @@ export const noopLogger: Logger = {
   // tslint:disable-next-line:no-console
   error: noop
 };
+
+
+
+export function toResult(list: SRecord[], name = 'toResult'): Result {
+  let header: string[] = [];
+  let table: string[][] = [];
+  if (list && list.length > 0) {
+    const e = list[0];
+    header = Object.keys(e);
+    table = [header.map((h) => e[h] ?? '')];
+  }
+  return {name, header, table};
+}
+
+export function toList<R extends SRecord>(data: RqResultOrList): R[] {
+  if (Array.isArray(data)) {
+    return data as any;
+  }
+
+  if (!data?.header || !data?.table) {
+    return [];
+  }
+
+  const header = data.header;
+
+  const list: Record<string, string>[] = [];
+  data.table.forEach((row: string[]) => {
+    const nrow: Record<string, string> = {};
+    list.push(nrow);
+    row.forEach((v, index) => {
+      const head = header[index] || 'name' + index;
+      nrow[head] = v;
+    });
+  });
+
+  return list as R[];
+}
+
+//
+// export function toList<R extends Record<string, string | undefined> = Record<string, string>>(
+//     serviceData: Result
+// ): R[] {
+//   if (Array.isArray(serviceData)) {
+//     return serviceData;
+//   }
+//   const list: R[] = [];
+//   if (serviceData.table && serviceData.header) {
+//     const header = serviceData.header;
+//     const table = serviceData.table;
+//
+//     table.forEach((row) => {
+//       const obj: any = {};
+//       list.push(obj);
+//       for (let j = 0; j < header.length; j++) {
+//         const head = header[j];
+//         obj[head] = row[j];
+//       }
+//     });
+//   }
+//   return list;
+// }
+
+
+export function toMap(data: RqResultOrList, keyColumn: string, valueColumn: string): SRecord {
+  const list = toList(data);
+  return list.reduce((a: any, e: any) => {
+    a[e[keyColumn]] = valueColumn ? e[valueColumn] : e;
+    return a;
+  }, {});
+}
+
+export function toFirst<R = SRecord>(data: RqResultOrList): R | undefined {
+  if (Array.isArray(data)) {
+    return data[0] as R;
+  }
+  if (typeof data === 'object' && Array.isArray(data.header) && Array.isArray(data.table)) {
+    return toList(data)[0] as R;
+  }
+  return undefined;
+}

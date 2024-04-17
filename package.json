@@ -1,6 +1,6 @@
 {
   "name": "remotequery-ts-common",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Remotequery Common for TypeScript",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -38,3 +38,4 @@
     "typescript": "^4.3.5"
   }
 }
+
