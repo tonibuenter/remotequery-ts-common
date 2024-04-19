@@ -51,6 +51,12 @@ export interface Result extends Partial<ExceptionResult> {
   hasMore?: boolean;
 }
 
+
+export interface ResultWithData extends Result {
+  header: string[];
+  table: string[][];
+}
+
 export type StartBlockType<E = string> = 'if' | 'if-else' | 'switch' | 'while' | 'foreach' | E;
 export type EndBlockType<E = string> = 'fi' | 'done' | 'end' | E;
 export type RegistryType<E = string> = 'node' | 'sql' | E;

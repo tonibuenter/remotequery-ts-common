@@ -1,7 +1,7 @@
 /* tslint:disable:no-string-literal */
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 
-import {ExceptionResult, Logger, PRecord, Result, RqResultOrList, SRecord} from "./types";
+import {ExceptionResult, Logger, PRecord, Result, ResultWithData, RqResultOrList, SRecord} from "./types";
 
 export const isError = (error: any): error is Error => {
   return typeof error.message === 'string' && typeof error.name === 'string';
@@ -58,17 +58,21 @@ export const noopLogger: Logger = {
 };
 
 
-
 export function toResult(list: SRecord[], name = 'toResult'): Result {
-  let header: string[] = [];
-  let table: string[][] = [];
+  const header: string[] = [];
+  const table: string[][] = [];
   if (list && list.length > 0) {
-    const e = list[0];
-    header = Object.keys(e);
-    table = [header.map((h) => e[h] ?? '')];
+    Object.keys(list[0]).forEach(k => header.push(k));
+    list.forEach(e => table.push(header.map((h) => e[h] ?? '')))
   }
   return {name, header, table};
 }
+
+export const toSRecord = (r: PRecord) =>
+    Object.entries(r).reduce<SRecord>((a, [k, v]) => {
+      a[k] = v.toString();
+      return a;
+    }, {});
 
 export function toList<R extends SRecord>(data: RqResultOrList): R[] {
   if (Array.isArray(data)) {
@@ -93,30 +97,6 @@ export function toList<R extends SRecord>(data: RqResultOrList): R[] {
   return list as R[];
 }
 
-//
-// export function toList<R extends Record<string, string | undefined> = Record<string, string>>(
-//     serviceData: Result
-// ): R[] {
-//   if (Array.isArray(serviceData)) {
-//     return serviceData;
-//   }
-//   const list: R[] = [];
-//   if (serviceData.table && serviceData.header) {
-//     const header = serviceData.header;
-//     const table = serviceData.table;
-//
-//     table.forEach((row) => {
-//       const obj: any = {};
-//       list.push(obj);
-//       for (let j = 0; j < header.length; j++) {
-//         const head = header[j];
-//         obj[head] = row[j];
-//       }
-//     });
-//   }
-//   return list;
-// }
-
 
 export function toMap(data: RqResultOrList, keyColumn: string, valueColumn: string): SRecord {
   const list = toList(data);
@@ -136,10 +116,10 @@ export function toFirst<R = SRecord>(data: RqResultOrList): R | undefined {
   return undefined;
 }
 
+export const toSingle = (r: Result): string =>
+    r.table?.[0]?.[0] ?? ''
 
-export const toSRecord = (r: PRecord) =>
-  Object.entries(r).reduce<SRecord>((a, [k, v]) => {
-    a[k] = v.toString();
-    return a;
-  }, {});
+
+export const toResultWithData = (r: Result): ResultWithData | false =>
+    (Array.isArray(r.header) && Array.isArray(r.table)) ? r as ResultWithData : false;
 
